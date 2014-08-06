@@ -1,6 +1,7 @@
 package me.sbozhko.test.actor;
 
 import akka.actor.ActorRef;
+import akka.actor.PoisonPill;
 import akka.actor.UntypedActor;
 import me.sbozhko.test.entity.DataEntity;
 
@@ -8,30 +9,34 @@ public class StatisticsCounterActor extends UntypedActor {
     private Long maxValue;
     private Long minValue;
     private Long accumulator = 0l;
-    private long nOfMessages = 0l;
-    private final ActorRef dbActor;
+    private long nOfDataEntities = 0l;
+    private final ActorRef statisticsAggregatorActor;
 
-    public StatisticsCounterActor(ActorRef dbActor) {
-        this.dbActor = dbActor;
+    public StatisticsCounterActor(ActorRef statisticsAggregatorActor) {
+        this.statisticsAggregatorActor = statisticsAggregatorActor;
     }
 
     @Override
     public void onReceive(Object o) throws Exception {
         if (Command.INTERVAL_FINISHED.equals(o)) {
-            double averageValue = accumulator / nOfMessages;
-            DbActor.StoreStatistics storeStatisticsMsg = new DbActor.StoreStatistics(maxValue, minValue, averageValue);
-            dbActor.tell(storeStatisticsMsg, getSelf());
-            // TODO: kill yourself
+            StatisticsAggregatorActor.Aggregate aggregateMsg = new StatisticsAggregatorActor.Aggregate(maxValue, minValue, accumulator, nOfDataEntities);
+            statisticsAggregatorActor.tell(aggregateMsg, getSelf());
+            getSelf().tell(PoisonPill.getInstance(), ActorRef.noSender());
         } else if (o instanceof DataEntity) {
             DataEntity dataEntity = (DataEntity) o;
-            if (maxValue < dataEntity.getValue()) {
+            if (nOfDataEntities == 0) {
                 maxValue = dataEntity.getValue();
-            }
-            if (minValue > dataEntity.getValue()) {
                 minValue = dataEntity.getValue();
+            } else {
+                if (maxValue < dataEntity.getValue()) {
+                    maxValue = dataEntity.getValue();
+                }
+                if (minValue > dataEntity.getValue()) {
+                    minValue = dataEntity.getValue();
+                }
             }
             accumulator += dataEntity.getValue();
-            nOfMessages++;
+            nOfDataEntities++;
         } else {
             throw new IllegalArgumentException();
         }

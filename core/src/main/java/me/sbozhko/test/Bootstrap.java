@@ -27,7 +27,7 @@ public class Bootstrap {
         Runnable task = new Runnable() {
             @Override
             public void run() {
-                DataEntity msg = new DataEntity((long) random.nextInt(10), System.currentTimeMillis());
+                DataEntity msg = new DataEntity((long) random.nextInt(10000), System.currentTimeMillis());
                 endpointActor.tell(msg, ActorRef.noSender());
             }
         };
