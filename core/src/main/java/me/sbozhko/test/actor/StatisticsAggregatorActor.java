@@ -39,7 +39,7 @@ public class StatisticsAggregatorActor extends UntypedActor {
             actualNOfMessages++;
 
             if (expectedNOfMessages == actualNOfMessages) {
-                double averageValue = accumulator / nOfDataEntities;
+                double averageValue = (double) accumulator / nOfDataEntities;
                 DbActor.StoreStatistics storeStatisticsЬып = new DbActor.StoreStatistics(maxValue, minValue, averageValue);
                 dbActor.tell(storeStatisticsЬып, getSelf());
                 getSelf().tell(PoisonPill.getInstance(), ActorRef.noSender());

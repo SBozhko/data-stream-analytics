@@ -15,9 +15,9 @@ import java.util.List;
 
 public class DataProcessingActor extends UntypedActor {
     public static final long STATISTICS_INTERVAL_MILLISECONDS = 60 * 1000;
+    private static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
     private Long lastTimestamp = 0l;
     private final ActorRef dbActor;
-    private static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
     private Router roundRobinRouter;
 
     public DataProcessingActor(ActorRef dbActor) {

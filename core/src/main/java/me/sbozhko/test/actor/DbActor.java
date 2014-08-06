@@ -1,15 +1,34 @@
 package me.sbozhko.test.actor;
 
 import akka.actor.UntypedActor;
-
-import java.util.Date;
+import akka.event.Logging;
+import akka.event.LoggingAdapter;
+import me.sbozhko.test.dao.StatisticsDao;
+import me.sbozhko.test.entity.StatisticsEntity;
 
 public class DbActor extends UntypedActor {
+    private final StatisticsDao dao;
+    private final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
+
+    public DbActor(StatisticsDao dao) {
+        this.dao = dao;
+    }
+
     @Override
-    public void onReceive(Object o) throws Exception {
+    public void onReceive(Object o) {
         if (o instanceof StoreStatistics) {
-            // TODO: store statistics
-            System.out.println(new Date() + " " + getSelf() + " " + o);
+            StoreStatistics storeStatisticsMsg = (StoreStatistics) o;
+            StatisticsEntity statisticsEntity = new StatisticsEntity();
+            statisticsEntity.setAvgValue(storeStatisticsMsg.averageValue);
+            statisticsEntity.setMaxValue(storeStatisticsMsg.maxValue);
+            statisticsEntity.setMinValue(storeStatisticsMsg.minValue);
+            try {
+                dao.save(statisticsEntity);
+                log.info("successfully inserted into db: {}", statisticsEntity);
+            } catch (Exception e) {
+                // just log error and continue working; at present no sense to rethrow this exception to the next level
+                log.error(e, "oops. something goes wrong");
+            }
         } else {
             throw new IllegalArgumentException();
         }
@@ -24,15 +43,6 @@ public class DbActor extends UntypedActor {
             this.maxValue = maxValue;
             this.minValue = minValue;
             this.averageValue = averageValue;
-        }
-
-        @Override
-        public String toString() {
-            return "StoreStatistics{" +
-                    "maxValue=" + maxValue +
-                    ", minValue=" + minValue +
-                    ", averageValue=" + averageValue +
-                    '}';
         }
     }
 }
