@@ -21,7 +21,7 @@ public class Bootstrap {
         StatisticsDao statisticsDao = (StatisticsDao) context.getBean("mongoDbStatisticsDao");
 
         ActorSystem system = ActorSystem.create();
-        ActorRef dbActor = system.actorOf(Props.create(DbActor.class, statisticsDao), "dbActor");
+        ActorRef dbActor = system.actorOf(Props.create(DbActor.class, statisticsDao).withDispatcher("mongodb-dispatcher"), "dbActor");
         final ActorRef endpointActor = system.actorOf(Props.create(DataProcessingActor.class, dbActor), "dataProcessingActor");
 
         FiniteDuration delay = Duration.create(1000, TimeUnit.MILLISECONDS);
